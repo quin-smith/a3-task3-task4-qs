@@ -135,11 +135,14 @@ purp_counts <- purple_urchins %>%
 
 ### Exploratory Graph
 
+Shows counts of purple urchins recorded at each site over time for the years included in the study.
+
 ```{r, echo = TRUE, message = FALSE, warning = FALSE}
 purp_counts %>% 
   ggplot(aes(x = YEAR, y = n)) +
   geom_col(aes(fill = site_full)) +
-  facet_wrap(~site_full)
+  facet_wrap(~site_full) +
+  labs(x = "Year", y = "Urchin Count")
 ```
 
 
