@@ -1,0 +1,148 @@
+---
+title: "a3_task3_quin_smith"
+author: "Quin Smith"
+date: "11/3/2020"
+output: html_document
+---
+
+### Summary
+
+This task will use version control, project management, data wrangling, analysis, and visualization to explore data of red and purple urchins recorded by Santa Barbara Coastal Long Term Ecological Research program divers.
+
+Data:
+
+Reed, D. 2020. SBC LTER: Reef: Long-term experiment: Kelp removal: Urchin size frequency distribution ver 20. Environmental Data Initiative. https://doi.org/10.6073/pasta/5a1e9ef03aa47bd2225c0bb98a02a63b
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(lubridate)
+```
+
+### Read in data
+
+Read in urchin data as `urchins`
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+urchins <- read.csv(here("data", "urchins.csv"))
+```
+
+## Section 1: Comparisons of size (cm) between Red and Purple urchins
+
+### Exploratory data viz
+
+Compare distribution of sizes between purple and red urchins using:
+- faceted histogram
+- boxplot
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+urchins %>% 
+  ggplot(aes(x = SIZE)) +
+  geom_histogram() +
+  facet_wrap(~COMMON_NAME) +
+  labs(x = "Size (cm)",
+       y = "n")
+
+urchins %>% 
+  ggplot(aes(x = COMMON_NAME, y = SIZE)) +
+  geom_boxplot() +
+  labs(x = "Urchin Common Name",
+       y = "Size (cm)")
+```
+
+### Descriptive Statistics
+
+Creates a summary table containing:
+
+- mean
+- median
+- standard deviation
+- sample size
+
+for purple and red urchin samples (size, cm).
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+urchin_stats <- urchins %>% 
+  group_by(COMMON_NAME) %>% 
+  summarize(mean_size = mean(SIZE),
+            median_size = median(SIZE),
+            sd_size = sd(SIZE),
+            n = n()
+            )
+
+urchin_stats
+```
+
+### Discussion:
+
+Based on the species of urchin alone (not taking into account location), the sample of red urchins had a larger mean size than purple urchins by 2.31 cm (20.5% larger).  In terms of central tendencies within the species of urchins, median size of purple urchins was only slightly larger than purple urchin mean size (only ~0.03 cm longer) while the red urchin median size was larger than their mean size (~0.23 cm longer).  As shown from the standard deviation, purple urchin size experienced less spread across the distribution (sd = 1.175 cm) compared to red urchin size which experienced more spread (sd = 1.891 cm).  This may indicate why the central tendency between the mean and median size of purple urchins was closer versus the red urchins where there was a greater difference in central tendency between mean and median sizes.
+
+To help contextualize the difference in mean sizes (purple urchins vs. red), here is are the actual and % difference in mean size:
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+purp_mean <- urchin_stats[1, "mean_size"]
+red_mean <- urchin_stats[2, "mean_size"]
+
+urchin_stats %>% 
+  summarize(act_mean_diff = 
+           red_mean - purp_mean,
+           perc_mean_diff =
+             (red_mean - purp_mean)/
+             (red_mean + purp_mean) * 100
+             )
+```
+
+## Section 2: Explore purple urchin counts by site and year
+
+### Purple Urchins Subset
+
+Creates a subset of urchins data, `purple_urchins` which:
+
+- includes only observations of purple urchins
+- converts date to "Date Class"
+- includes a new column containing the year of observations
+- includes a new column calle **site_full** containing the full name for each of the five sites: NAPL = Naples Reed, AQUE = Arroyo Quemado Reef, CARP = Carpinteria Reef, MOHK = Mohawk Reef, IVEE = Isla Vista Reef
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+purple_urchins <- urchins %>% 
+  filter(COMMON_NAME == "Purple Urchin") %>% 
+  mutate(DATE = mdy(DATE),
+         YEAR = year(DATE),
+         site_full = case_when(
+           SITE == "NAPL" ~ "Naples Reef",
+           SITE == "AQUE" ~ "Arroyo Quemado Reef",
+           SITE == "CARP" ~ "Carpinteria Reef",
+           SITE == "MOHK" ~ "Mohawk Reef",
+           SITE== "IVEE" ~ "Isla Vista Reef"
+           )
+         )
+```
+
+### Purple urchins summary table
+
+Table includes **total number of purple urchins observed by site and year**
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+purp_counts <- purple_urchins %>% 
+  count(site_full, YEAR)
+
+```
+
+### Exploratory Graph
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+purp_counts %>% 
+  ggplot(aes(x = YEAR, y = n)) +
+  geom_col(aes(fill = site_full)) +
+  facet_wrap(~site_full)
+```
+
+
+
+
+
