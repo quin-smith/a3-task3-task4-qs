@@ -1,0 +1,130 @@
+---
+title: "a3_task4_quin_smith"
+author: "Quin Smith"
+date: "11/5/2020"
+output: html_document
+---
+
+### Summary
+
+This task compares the mean size of purple urchins in CONTROL (no giant kelp removal) and ANNUAL (annual kelp removal) sections of Naples Reef in January 2010.  It uses visualization to exhibit the normality of the size data, creates a descriptive statistics summary table, and runs the data through a 2 sample t-test to compare the mean sizes of the samples and produce a p-value. 
+
+Data:
+
+Reed, D. 2020. SBC LTER: Reef: Long-term experiment: Kelp removal: Urchin size frequency distribution ver 20. Environmental Data Initiative. https://doi.org/10.6073/pasta/5a1e9ef03aa47bd2225c0bb98a02a63b
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(lubridate)
+```
+
+### Read in data
+
+Read in urchin data as `urchins`
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+urchins <- read.csv(here("data", "urchins.csv"))
+```
+
+### Data Wrangling
+
+- converts **DATE** into date-class
+- creates new cols **YEAR** and **MONTH**
+- filters data to only include Jan 2010 purple urchins observations from Naples Reef
+
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+purp_JAN2010 <- urchins %>% 
+  mutate(DATE = mdy(DATE), 
+         YEAR = year(DATE), 
+         MONTH = month(DATE)) %>% 
+  filter(COMMON_NAME == "Purple Urchin",
+         SITE == "NAPL",
+         YEAR == 2010, 
+         MONTH == 1)
+```
+
+### Exploratory Visualization (Normality)
+
+- Exploratory histogram of size distributions, **CONTROL** vs **ANNUAL**
+- Exploratory qq-plot to estimate normality of size dist., **CONTROL** vs **ANNUAL**
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+purp_JAN2010 %>% 
+  ggplot(aes(x = SIZE)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~TREATMENT) +
+  labs(x = "Purple urchin size (cm)",
+       y = "Frequency")
+
+purp_JAN2010 %>% 
+  ggplot(aes(sample = SIZE)) +
+  geom_qq() +
+  facet_wrap(~TREATMENT)
+           
+```
+
+### Discussion of exploratory visualization
+
+The quantile-quantile and histogram visualizations show that the distributions of purple urchin size in both treatments are close to normal.  It is not as easy to see the bell-shaped curves about the central tendency in the histograms but the linearity of our sample distributions against a theoretical normal distribution in the qq-plots suggests normality.
+
+### Descriptive Statistics
+
+Creates a summary table containing the following statistics for purple urchin sizes (cm), January 2010 based on treatment:
+
+- mean
+- median
+- standard deviation
+- sample size
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+purp_JAN2010_stats <- purp_JAN2010 %>% 
+  group_by(TREATMENT) %>% 
+  summarize(mean_size = mean(SIZE),
+            median_size = median(SIZE),
+            sd_size = sd(SIZE),
+            n = n())
+
+purp_JAN2010_stats
+```
+
+### 2 Sample T-test
+
+1. Pulls vectors for size data
+2. Runs a 2 sample t-test to compare mean size (cm) of purple urchins, **ANNUAL** versus **CONTROL** from January 2010 observations at Naples Reef
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+annual_sample <- purp_JAN2010 %>% 
+  filter(TREATMENT == "ANNUAL") %>% 
+  pull(SIZE)
+
+control_sample <- purp_JAN2010 %>% 
+  filter(TREATMENT == "CONTROL") %>% 
+  pull(SIZE)
+
+t.test(x = annual_sample, control_sample)
+```
+
+### Discussion of 2 Sample T-test
+
+Based on the results of this two sample t-test, the difference between the mean size of purple urchins from the annual kelp removal treatment sample is not very large compared to the mean size of the purple urchins from the control group.  In fact, the actual difference in mean size between groups is 0.19, which yields only a 2.5% difference (see tibble below).  The p-value produced from this test is 0.2536, which means that if we accepted the null-hypothesis that the mean size for the two groups were the same, there would be a 25% chance to find sample means at least this different from each other; therefore, given this relatively high probability, we CANNOT reject the null-hypothesis that the true difference in means of these samples is equal to 0.
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+annual_mean <- purp_JAN2010_stats[1, "mean_size"]
+control_mean <- purp_JAN2010_stats[2, "mean_size"]
+
+mean_diff <- purp_JAN2010_stats %>% 
+  summarize(act_mean_diff = 
+           annual_mean - control_mean,
+           perc_mean_diff =
+             (annual_mean - control_mean)/(annual_mean + control_mean) * 100)
+
+mean_diff
+```
+
