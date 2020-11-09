@@ -113,7 +113,7 @@ t.test(x = annual_sample, control_sample)
 
 ### Discussion of 2 Sample T-test
 
-Based on the results of this two sample t-test, the difference between the mean size of purple urchins from the annual kelp removal treatment sample is not very large compared to the mean size of the purple urchins from the control group.  In fact, the actual difference in mean size between groups is 0.19, which yields only a 2.5% difference (see tibble below).  The p-value produced from this test is 0.2536, which means that if we accepted the null-hypothesis that the mean size for the two groups were the same, there would be a 25% chance to find sample means at least this different from each other; therefore, given this relatively high probability, we CANNOT reject the null-hypothesis that the true difference in means of these samples is equal to 0.
+Based on the results of this two sample t-test, the difference between the mean size of purple urchins from the annual kelp removal treatment sample is not very large compared to the mean size of the purple urchins from the control group.  In fact, the actual difference in mean size between groups is 0.19, which yields only a 2.5% difference (see tibble below).  The p-value produced from this test is 0.2536, which means that if we accepted the null-hypothesis that the mean size for the two groups were the same, there would be a ~25% chance to find sample means at least this different from each other.  Therefore, given this relatively high probability, we CANNOT reject the null-hypothesis that the true difference in means of these samples is equal to 0.
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE}
 annual_mean <- purp_JAN2010_stats[1, "mean_size"]
